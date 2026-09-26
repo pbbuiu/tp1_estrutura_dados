@@ -34,20 +34,30 @@ int main(int argc, char *argv[]){
     if (argc == 6) opt = true; // [-P]
 
 
+    
+
     Registros itemPesquisado;
     itemPesquisado.chave = chave;
 
     if      (strcmp(argv[1], "1")){
         //Testes com o método de acesso sequencial indexado
+
+
     }
     else if (strcmp(argv[1], "2")){
         //Testes com árvore binária adequada à memória externa
+
+
     }
     else if (strcmp(argv[1], "2")){
         //Testes com árvore B
+
+
     }
     else if (strcmp(argv[1], "2")){
         //Testes com árvore B*
+
+
     }
 
 
