@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdbool.h>
+#include <stdbool.h> //teste
 
 int main(int argc, char *argv[]){
 
