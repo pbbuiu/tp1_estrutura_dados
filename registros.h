@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define ARQUIVO_BINARIO "arq.bin"
-#define TAM_DADO2
+#define TAM_DADO2 5000
 
 typedef struct registros{
     int chave;
