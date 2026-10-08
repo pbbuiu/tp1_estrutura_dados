@@ -31,7 +31,10 @@ int main(int argc, char *argv[]){
     if (*check != '\0') return 1;
 
     //Opção de apresentação das chaves de pesquisa dos registros do arquivo considerado
-    if (argc == 6) opt = true; // [-P]
+    if (argc == 6) { //adicionado pq qualquer como quinto argumento estava ativando a opção de mostrar as chaves pesquisadas na tela
+        if (strcmp(argv[5], "-P") == 0) opt = true;
+        else { printf("Argumento opcional invalido: %s\n", argv[5]); return 1; }
+    }
 
 
     
