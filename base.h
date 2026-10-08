@@ -6,6 +6,12 @@
 #define ARQUIVO_BINARIO "arq.bin"
 #define TAM_DADO2 5000
 
+typedef enum{
+    ORDENADO,
+    DESORDENADO,
+    ALEATORIO
+} OrdemArquivo;
+
 typedef struct registros{
     int chave;
     long int dado1;
