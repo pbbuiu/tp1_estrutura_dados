@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
         
     }
     else if (metodo == 2){
-        //Testes com árvore binária adequada à memória externa
+        realizaPesquisaBinaria(&a, &itemPesquisado, quantidade, opt);
 
 
     }
