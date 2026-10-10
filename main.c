@@ -1,4 +1,4 @@
-#include "arvoreBinaria.h"
+// #include "arvoreBinaria.h"
 #include "acesso_sequencial.h"
 #include "base.h"
 #include <stdio.h>
@@ -43,8 +43,10 @@ int main(int argc, char *argv[]){
     
 
     if      (metodo == 1){ //Acesso sequencial indexado
-        if (situacao == 1)
+        if (situacao == 1){
             realizaPesquisa(&a, &itemPesquisado, quantidade, opt);
+            if (opt) printf("Chave: %d Dado1: %ld Dado2: %s", itemPesquisado.chave, itemPesquisado.dado1, itemPesquisado.dado2);
+        }
         else{
             printf("Só é possível utilizar a pesquisa com o método de acesso sequencial indexado com vetores ordenados crescentemente nesse código\n");
             return 1;
@@ -52,7 +54,7 @@ int main(int argc, char *argv[]){
         
     }
     else if (metodo == 2){
-        realizaPesquisaBinaria(&a, &itemPesquisado, quantidade, opt);
+        // realizaPesquisaBinaria(&a, &itemPesquisado, quantidade, opt);
 
 
     }

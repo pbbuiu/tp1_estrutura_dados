@@ -1,18 +1,24 @@
-#include "base.h"
 #include <stdio.h>
-#include "geraBin.h"
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include <stdbool.h>
+#include "base.h"
 
+//gera arquivo com a quantidade de registros e a situacçao (1 = crescente, 2 = decrescente, 3 = aleatoria)
+bool geraArquivo(char *nome, int quantidade, int situacao);
+
+//caso -P tenha sido passado como argumento, imprime o arquivo de registros
+bool imprimeArquivo(char *nome);
+
+bool traduz(char *nomeBin, char *nomeTxt, int quantidade);
 int main(){
 
 
 
     char nomes1[3][30]={"arq_crescente.bin", "arq_decres.bin", "arq_aleatorio.bin"};
     char nomes2[3][30]={"arq_crescente.txt", "arq_decres.txt", "arq_aleatorio.txt"};
-    int quantidade = 2000;
+    int quantidade = 2000000;
     int escolha=0;
 
     do{
@@ -25,7 +31,7 @@ int main(){
         }
         printf("4 - Criar os tres arquivos\n");
         printf("0 -Sair do Menu de Criacaoo e entra no Menu de Traducaoo\n");
-        printf("Escolha uma opcao acima");
+        printf("Escolha uma opcao acima: ");
 
         if(scanf("%d", &escolha) != 1){//usuario digitar algo diferente de um inteiro
             while (getchar() != '\n'); 
@@ -51,7 +57,7 @@ int main(){
                 printf("Saindo...\n");
                     break;
             default:
-                printf("Escolha uma opcao dentre as mostradas");
+                printf("Escolha uma opcao dentre as mostradas: ");
         }
     } while(escolha !=0);
 
@@ -65,7 +71,7 @@ int main(){
         }
         printf("4 - Traduzir os tres arquivos\n");
         printf("0 -Sair\n");
-        printf("Escolha uma opcao acima");
+        printf("Escolha uma opcao acima: ");
 
         if(scanf("%d", &escolha) != 1){//usuario digitar algo diferente de um inteiro
             while (getchar() != '\n'); 
@@ -90,7 +96,7 @@ int main(){
                 printf("Saindo...\n");
                     break;
             default:
-                printf("Escolha uma opcao dentre as mostradas");
+                printf("Escolha uma opcao dentre as mostradas: ");
         }
     } while(escolha !=0);
     

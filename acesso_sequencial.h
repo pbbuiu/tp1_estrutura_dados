@@ -32,7 +32,7 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
     if (!arq) {printf("Houve um erro na leitura do arquivo!\n"); return false;}
     
 
-    while(fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
+    while(((cont+1)*ITENSPAGINA < qtdRegistrosArq) && fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = cont+1;
@@ -44,6 +44,8 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = tam;
     }
+    else
+        a->transferencia++;
     clock_gettime(CLOCK_MONOTONIC, &a->fim); //Fim do contador de pre-processamento
     a->tempoTotal = (a->fim.tv_sec - a->inicio.tv_sec) + (a->fim.tv_nsec - a->inicio.tv_nsec)/ 1e9;
 
@@ -75,7 +77,8 @@ int pesquisa (Analise *a, tipoIndice tabelaPaginas[], int tamTabela, Registros* 
     clock_gettime(CLOCK_MONOTONIC, &a->inicio);
     Registros pagina[ITENSPAGINA];
     inicializaAnalise(a);
-    int qtdItens, desloc;
+    int qtdItens;
+    double desloc;
 
     int IndiceTabelaPagina=0;
     if (p) printf("\n= Comparações com as chaves armazenadas na tabela de paginas =\n");
