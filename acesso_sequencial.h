@@ -27,7 +27,7 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
     tipoIndice *tabelaPaginas = (tipoIndice*) malloc (tam * sizeof(tipoIndice));
     //}
     
-    FILE *arq = fopen("testeBin.bin", "rb");
+    FILE *arq = fopen("arq_crescente.bin", "rb");
     a->comparacoes++;
     if (!arq) {printf("Houve um erro na leitura do arquivo!\n"); return false;}
     

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "geraBin.h"
 #include <string.h>
 #include <stdbool.h>
 /* ===================CRIACAO DO VETOR DE CHAVES=========================== */

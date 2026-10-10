@@ -1,3 +1,4 @@
+#include "arvoreBinaria.h"
 #include "acesso_sequencial.h"
 #include "base.h"
 #include <stdio.h>

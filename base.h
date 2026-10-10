@@ -26,5 +26,4 @@ void inicializaAnalise(Analise *a){
     a->transferencia = 0;
     a->tempoTotal = 0;
 }
-
 #endif //BASE_H
