@@ -136,10 +136,8 @@ void pesquisar(int valor, Analise* analisador){
     fclose(arvore);
 }   
 
-int main() {
-    FILE* arvore = fopen("arvoreBinaria.bin", "wb+"); 
-    Analise analisador = inicializaAnalise(); 
-
+realizaPesquisaBinaria (Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, bool p){
+    FILE* arvore = fopen("arvoreBinaria.bin", "wb+");
     criarArvore(arvore, 50, &analisador); // Não sei se é o ideal fazer algo assim
 
 
