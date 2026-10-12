@@ -149,6 +149,30 @@ void pesquisar(int chave, Analise* analisador, bool printer){
 }   
 
 int main() {
+    // Toda essa parte diz respeito apenas a selecao do tipo de arquivo que sera usado pra construcao da arvore
+    char arqNomeRegistros[30];
+    int selecionadorArq;
+    printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
+    printf("1 - Arquivo Ordenado Crescente\n2 - Arquivo Ordenado Decrescente\n3 - Arquivo Aleatorio\nEscolha das opcoes acima qual arquivo sera usado para criar a arvore binaria: ");
+    scanf("%d", &selecionadorArq);
+    switch(selecionadorArq){
+        case 1:
+            strcpy(arqNomeRegistros, "arq_crescente.bin");
+            break;
+        case 2:
+            strcpy(arqNomeRegistros, "arq_decres.bin");
+            break;
+        case 3:
+            strcpy(arqNomeRegistros, "arq_aleatorio.bin");
+            break;
+        default:
+            printf("Opcao invalida\n");
+            return 0;
+    }
+
+
+
+    ////////////////////////////////////////// parte errada, uma vez que vamos herdar isso de outra funcao
     // Variavel para analise
     Analise analisador;
     inicializaAnalise(&analisador); 
@@ -161,13 +185,12 @@ int main() {
         return 0;
     }
 
-    FILE* registrosBinarios = fopen("registros.bin", "rb"); //////////////////// questao do nome
+    FILE* registrosBinarios = fopen(arqNomeRegistros, "rb"); //////////////////// questao do nome
     if(registrosBinarios == NULL){
         printf("Erro ao abrir o arquivo binario de registros\n");
         return 0;
     }
 
-    printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
     printf("Digite a chave do registro que deseja buscar: ");
     int chave;
     scanf("%d", &chave);
@@ -198,7 +221,7 @@ int main() {
     if((txt = fopen("arvoreBinaria.txt", "w")) != NULL){
         Item conversor;
         fseek(arvore, 0, SEEK_SET);
-        for(int i = 0; i < 1000; i++){
+        for(int i = 0; i < 1000; i++){ /////////////////////////// preciso saber a quantidade de itens
             fread(&conversor, sizeof(Item), 1, arvore);
             fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
         }
