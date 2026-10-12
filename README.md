@@ -4,4 +4,4 @@ Objetivos:
  (1) acesso sequencial indexado,
  (2) árvore binária de pesquisa adequada à memória externa, 
  (3) árvore B 
- (4) árvore B
+ (4) árvore *B
