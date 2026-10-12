@@ -1,3 +1,4 @@
+#include "arvoreB.h"
 #include "arvoreBinaria.h"
 #include "acesso_sequencial.h"
 #include "base.h"
@@ -58,8 +59,12 @@ int main(int argc, char *argv[]){
     }
     else if (metodo == 3){
         //Testes com árvore B
-
-
+        if (situacao <1 && situacao >3)
+        prinft("Situacao fora das possiveis.\n")
+        return 1;
+        else{
+        bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, int situacao, bool p);
+       }
     }
     else if (metodo == 4){
         //Testes com árvore B*

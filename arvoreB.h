@@ -1,34 +1,37 @@
+#ifndef ARVOREB_H
+#define ARVOREB_H
+
+#include "base.h"
+#include "geraBin.h"
 #include "arvoreBinaria.h"
-#include <stdio.h>
-
-
-
-
-
-
-
-
-/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
 #define M 2  //Ordem da minha Árvore B
-#define MM 4 //2m quantidade de itens em cada página
+#define MAX_CHAVES (2 * M) //2m quantidade de itens em cada página
+#define NIL (-1L)
 
-typedef long TipoChave;
-
+//removi o "Tipochave"
 typedef struct TipoRegistro{
-    TipoChave chave;
+    int chave;//mudei para int, o long de antes da conflito com o registro
+    long pos; //adicionei o indice de registro no arquivo de dados
 } TipoRegistro;
 
-typedef struct TipoPagina* TipoApontador;
-
+//typedef struct TipoPagina* TipoApontador; Antes
+typedef long TipoApontador //depois
 typedef struct TipoPagina{
     int n;
-    TipoRegistro r[MM];
-    TipoApontador p[MM + 1];
+    TipoRegistro r[MAX_CHAVES];
+    TipoApontador p[MAX_CHAVES + 1];
 } TipoPagina;
+
+typedef struct{
+    FILE *arqArvore; //arvoreB.bin (páginas)
+    FILE *arqDados; //arq_*.bin 
+    TipoApontador raiz;
+    long numPaginas
+}ArvoreB;
 
 void inicializador(TipoApontador *arvore){
     *arvore = NULL;
@@ -39,16 +42,15 @@ bool pesquisa(TipoApontador ap, TipoRegistro *x){
 
     if (!ap){
         printf("Nao foi possivel encontrar o item\n");
-        return;
+        return false;
     }
 
     //Agora vamos procurar o ramo em que devemos descer na árvore 
     while(i < ap->n && x->chave > ap->r[i-1].chave) i++;
 
-    if (x->chave == ap->r[i-1].chave){
-        *x = ap->r[i-1];
-        return true;
-    }
+    if (x->chave == pag.r[i-1].chave) { *x = pag.r[i-1]; return true; }
+    if (x->chave <  pag.r[i-1].chave) return pesquisaB(t, pag.p[i-1], x, a);
+    else                              return pesquisaB(t, pag.p[i],   x, a);
 
     if (i < ap->n)  return pesquisa(ap->p[i-1], x); 
     else            return pesquisa(ap->p[i], x);
@@ -73,12 +75,20 @@ bool ins(TipoRegistro x, TipoApontador ap, bool *cresceu, TipoRegistro *regRetor
     int j;
     TipoApontador apTemp;
 
+    if (cresceu) { //caso a raiz rache
+    TipoPagina nova; inicializaPaginaB(&nova);
+    nova.n = 1;  nova.r[0] = regRet;
+    nova.p[0] = t->raiz;  nova.p[1] = apRet;
+    TipoApontador pos = t->numPaginas++;
+    escrevePaginaB(t, pos, &nova);
+    t->raiz = pos;
+}
     //Caso base: Passou do nível folha, ou seja, chegou aonde precisa ser inserido
     if (ap == NULL){
         *cresceu = true;
         *regRetorno = x;
         *apRetorno = NULL;
-        return;
+        return true;
     }
     //Varredura para continuar descendo entre os ramos 
     while(i < ap->n && x.chave > ap->r[i-1].chave) i++;
@@ -93,7 +103,8 @@ bool ins(TipoRegistro x, TipoApontador ap, bool *cresceu, TipoRegistro *regRetor
     if (x.chave < ap->r[i-1].chave) i--;
 
     //Desse recursivamente fazendo a pesquisa até encontrar a página que o elemento deve ser inserido
-    return ins(x, ap->p[i], cresceu, regRetorno, apRetorno);
+    bool ok = ins(t, x, pag.p[i], cresceu, regRet, apRet, a);
+    if (!ok || !*cresceu) return ok;   // duplicata ou nada a propagar
 
     //Se a recursividade retornar com o cresceu == false significa que deu tudo certo
     if (!(*cresceu)) return true;
@@ -150,4 +161,29 @@ void insereNaPagina(TipoApontador ap, TipoRegistro x, TipoApontador apDir){
     ap->p[k+1] = apDir;
     ap->n++;
 }
-*/
+
+void lePaginaB(ArvoreB *t, TipoApontador pos, TipoPagina *pag, Analise *a){
+    fseek(t->arqArvore, pos * sizeof(TipoPagina), SEEK_SET);
+    if ( fread(pag, sizeof(TipoPagina), 1 , t->arqArvore) != 1){
+        printf("Erro ao ler a páhina %ld da arvoreB", pos);
+        exit(1);
+    }
+    a->transferencia++;
+}
+
+void escrevePaginaB(){
+
+
+}
+
+bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, int situacao, bool p){
+    clock_gettime(CLOCK_MONOTONIC, &a->inicio); //Inicio do contador de tempo de pre-processamento
+    int cont = 0;
+   char *nomes[3] = {"arq_crescente.bin", "arq_decres.bin", "arq_aleatorio.bin"};
+    if (situacao < 1 || situacao > 3) return false;
+     char *nomeDados = nomes[situacao - 1];
+
+
+}
+
+#endif // ARVOREB_H
