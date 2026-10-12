@@ -11,41 +11,19 @@ typedef struct{
     int dir;
 } Item;
 
-// Funcao responsavel por criar um vetor com os valores do arquivo binario
-int* criaVetor(char* arqNome, int* qtdItens, Analise* analisador, bool printer){
-    FILE* arquivoBinario = fopen(arqNome, "rb");
-    if(arquivoBinario == NULL){
-        printf("Erro ao abrir o arquivo binario contendo os numeros\n");
-        // return arquivoBinario;
-    }
-
-    // Vai ate o final do arquivo e diz quantos valores existem para poder criar um vetor desse tamanho
-    fseek(arquivoBinario, 0, SEEK_END); 
-    *qtdItens = ftell(arquivoBinario)/sizeof(int); 
-    int* vetor = malloc(*qtdItens * sizeof(int));
-
-    // Copia cada elemento do arquivo Binario para o vetor 
-    fseek(arquivoBinario, 0, SEEK_SET);
-    int numeroAtual;
-    int i = 0;
-    while (fread(&numeroAtual, sizeof(int), 1, arquivoBinario) == 1) {
-        if(printer) printf("Valor %d tranferido do arquivo Binario para o vetor\n", numeroAtual);
-        analisador->transferencia++; // +1 transferencia
-        vetor[i] = numeroAtual;
-        i++;
-    }
-
-    fclose(arquivoBinario);
-
-    return vetor;
-}
-
 // Funcao responsavel por adicionar um item a arvore
-void inserir(FILE* arvore, int novoValor, Analise* analisador){ 
+void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){ 
+    
+    // Transferencia de um registro do arquivo binario de registros para uma variavel na memoria interna
+    Registros novoRegistro;
+    fread(&novoRegistro, sizeof(Registros), 1, registrosBinarios);
+    analisador->transferencia++; // +1 tranferencia
 
     // Cria o novo item e faz as devidas associacoes
     Item novoItem;
-    novoItem.registro.chave = novoValor;
+    novoItem.registro.chave = novoRegistro.chave;
+    novoItem.registro.dado1 = novoRegistro.dado1;
+    strcpy(novoItem.registro.dado2, novoRegistro.dado2);
     novoItem.esq = -1;
     novoItem.dir = -1;
 
@@ -122,7 +100,7 @@ void inserir(FILE* arvore, int novoValor, Analise* analisador){
 }
 
 // Funcao responsavel por navegar pela arvore para encontrar um item
-void pesquisar(char* arqNome, int valor, Analise* analisador, bool printer){
+void pesquisar(char* arqNome, int chave, Analise* analisador, bool printer){
     FILE* arvore = fopen("arvoreBinaria.bin", "rb"); 
     if(arvore == NULL){
         printf("Erro ao abrir o arvore Binaria para fazer a pesquisa\n");
@@ -135,24 +113,24 @@ void pesquisar(char* arqNome, int valor, Analise* analisador, bool printer){
         analisador->transferencia++; // +1 transferencia
 
         // Caso o valor procurado seja menor do o valor atual e diferente de -1, vamos para o item na posicao guardada no esq
-        if(valor < itemAtual.registro.chave && itemAtual.esq != -1){   
+        if(chave < itemAtual.registro.chave && itemAtual.esq != -1){   
             analisador->comparacoes++; // +1 comparacao 
-            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, valor, analisador->transferencia, analisador->comparacoes);
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
             fseek(arvore, itemAtual.esq*sizeof(Item), SEEK_SET); // Vai para posicao mostrada pelo esq
         }
         
         // Caso o valor procurado seja maior do o valor atual e diferente de -1, vamos para o item na posicao guardada no dir
-        else if(valor > itemAtual.registro.chave && itemAtual.dir != -1){
+        else if(chave > itemAtual.registro.chave && itemAtual.dir != -1){
             analisador->comparacoes++; // +1 comparacao 
-            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, valor, analisador->transferencia, analisador->comparacoes);
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
             fseek(arvore, itemAtual.dir*sizeof(Item), SEEK_SET); // Vai para a posicao mostrada pelo dir
         }
 
         // Achamos o item
-        else if(valor == itemAtual.registro.chave){
+        else if(chave == itemAtual.registro.chave){
             analisador->comparacoes++; 
-            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, valor, analisador->transferencia, analisador->comparacoes);
-            printf("O item %d foi encontrado na posicao %ld da arvore binaria\n", valor, ftell(arvore)/sizeof(Item));
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
+            printf("\nRegistro encontrado na posicao %ld da arvore binaria\nChave: %d\nDado1: %ld\nDado2: %s.- \n", ftell(arvore)/sizeof(Item), chave, itemAtual.registro.dado1, itemAtual.registro.dado2);
             break;
         }
 
@@ -167,46 +145,47 @@ void pesquisar(char* arqNome, int valor, Analise* analisador, bool printer){
 }   
 
 int main() {
+    // Variavel para analise
+    Analise analisador;
+    inicializaAnalise(&analisador); 
     char arqNome[30];
     strcpy(arqNome, ""); 
+    int printer = true; //////////////// tirar daqio
     
+    // Talvez eu precise colocar essas aberturas dentro das funções, abrindo e fechando sempre ////////////////////////////////////
     FILE* arvore = fopen("arvoreBinaria.bin", "wb+"); 
     if(arvore == NULL){
         printf("Erro ao criar o arquivo arvoreBinaria.bin\n");
         return 0;
     }
 
+    FILE* registrosBinarios = fopen("registros.bin", "rb");
+    if(registrosBinarios == NULL){
+        printf("Erro ao abrir o arquivo binario de registros\n");
+        return 0;
+    }
 
-    int printer = false; //////////////// tirar daqio
+
+        // preciso pensar em onde fechar ele depois
+
+        // Pensar na questao da quantidade de registros
+
     
-    // Variavel para analise
-    Analise analisador;
-    inicializaAnalise(&analisador); 
 
 
     
 
 
     printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
-    printf("Digite o valor que deseja buscar: ");
-    int valor;
-    scanf("%d", &valor);
-
-    // Recebe um arquivo binario contendo os valores e transforma em um vetor
-    int qtdItens = 0;
-    int* vetor;
-    vetor = criaVetor("numeros.bin", &qtdItens, &analisador, printer); ////////////////////////////////////// Isso aqui talvez nao precise, preciso entender commo vamos pegar o arquivo binario
+    printf("Digite a chave do registro que deseja buscar: ");
+    int chave;
+    scanf("%d", &chave);
 
     printf("\n- PRE-PROCESSAMENTO -\n\n"); ////////////////////////////////////////////////// falta incluir o tempo
 
-    // Imprime as analises das transferencias para o vetor
-    printf("- Criacao do vetor de valores:\n");
-    printf("Tempo: %f\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador.tempoTotal, analisador.comparacoes, analisador.transferencia);
-    inicializaAnalise(&analisador); // Reseta os valores do analisador porque ja copiamos os itens para o vetor
-
-    // Insere todos os valores do vetor na arvore binaria
-    for(int i = 0; i < qtdItens; i++){
-        inserir(arvore, vetor[i], &analisador);
+    // Insere todos os valores do vetor na arvore binaria //////////////////////////////////////// questao da quantidade
+    for(int i = 0; i < 1000; i++){
+        inserir(arvore, registrosBinarios, &analisador);
     }
 
     // Imprime as analises da montagem da arvore
@@ -215,26 +194,27 @@ int main() {
     inicializaAnalise(&analisador); // Reseta os valores do analisador por que a arvore foi montada 
 
     // clock_gettime(CLOCK_MONOTONIC, &analisador.inicio);
-    pesquisar("arvoreBinaria.bin", valor, &analisador, printer);
+    pesquisar("arvoreBinaria.bin", chave, &analisador, printer);
     // clock_gettime(CLOCK_MONOTONIC, &analisador.fim);
     // analisador.tempoTotal = (analisador.fim.tv_sec - analisador.inicio.tv_sec) + (analisador.fim.tv_nsec - analisador.inicio.tv_nsec) / 1e9;
-    free(vetor);
 
     // Imprime as analises da pesquisa
     printf("\n- Pesquisa -\n"); /////////////////////////////// falta incluir o tempo
     printf("Tempo: %f\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador.tempoTotal, analisador.comparacoes, analisador.transferencia);
 
     // Criacao de um arquivo txt que representa a arvore binaria
-    FILE* txt = fopen("rascunho.txt", "w");
-
-    Item conversor;
-    fseek(arvore, 0, SEEK_SET);
-    for(int i = 0; i < qtdItens; i++){
-        fread(&conversor, sizeof(Item), 1, arvore);
-        fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
+    FILE* txt;
+    if((txt = fopen("arvoreBinaria.txt", "w")) != NULL){
+        Item conversor;
+        fseek(arvore, 0, SEEK_SET);
+        for(int i = 0; i < 1000; i++){
+            fread(&conversor, sizeof(Item), 1, arvore);
+            fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
+        }
+        fclose(txt);
     }
+    else printf("Erro ao criar o arquivo txt da arvore binaria\n");
 
-    fclose(txt);
     fclose(arvore);
 
     return 0;
