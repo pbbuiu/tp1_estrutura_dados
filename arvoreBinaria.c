@@ -53,10 +53,11 @@ void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){
             analisador->comparacoes++; // +1 comparacao
 
             // Caso o campo esq seja -1, quer dizer que é um "no" sem filhos, logo é aqui que vamos atualizar o endereco
-            if(ItemAtual.esq == -1){ ///////////////////////////////////////////////////////////// nao sei se conta como comparacao para ser adicionada ao analisador
+            if(ItemAtual.esq == -1){ 
+                analisador->comparacoes++; // +1 comparacao
                 ItemAtual.esq = posicaoNovoItem; // Variavel na memoria interna recebe a posicao do novo item adicionado 
 
-                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); ///////////////////////////////////////////////////// explicar melhr aqui
+                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); // Vamos para a posicao do item que vamos atualizar na arvore binaria
                 fwrite(&ItemAtual, sizeof(Item), 1, arvore);
                 analisador->transferencia++; // +1 tranferencia
 
@@ -68,17 +69,18 @@ void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){
             // So caimos nesse else caso a item atual possua filho (dir ou esq != -1), logo vamos para a posicao desse filho
             else{
                 fseek(arvore, ItemAtual.esq*sizeof(Item), SEEK_SET); // Ponteiro vai do inicio até a posicao do proximo item
-            }////////////////////////////////////////////////////////////
+            }
         }
 
         else if(novoItem.registro.chave > ItemAtual.registro.chave){
              analisador->comparacoes++; // +1 comparacao
 
             // Caso o campo dir seja -1, quer dizer que é um "no" sem filhos, logo é aqui que vamos atualizar o endereco
-            if(ItemAtual.dir == -1){ ///////////////////////////////////////////////////////////// nao sei se conta como comparacao para ser adicionada ao analisador
+            if(ItemAtual.dir == -1){
+                analisador->comparacoes++; // +1 comparacao
                 ItemAtual.dir = posicaoNovoItem; // Variavel na memoria interna recebe a posicao do novo item adicionado 
 
-                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); ///////////////////////////////////////////////////// explicar melhr aqui
+                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET);// Vamos para a posicao do item que vamos atualizar na arvore binaria
                 fwrite(&ItemAtual, sizeof(Item), 1, arvore);
                 analisador->transferencia++; // +1 tranferencia
 
@@ -90,17 +92,19 @@ void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){
             // So caimos nesse else caso a item atual possua filho (dir ou esq != -1), logo vamos para a posicao desse filho
             else{
                 fseek(arvore, ItemAtual.dir*sizeof(Item), SEEK_SET); // Ponteiro vai do inicio até a posicao do proximo item
-            }////////////////////////////////////////////////////////////
+            }
         }
 
-        else
-            printf("ERROR, nao pode haver chaves iguais\n"); ////////////////////////////////////// pensar no que fazer em caso de itens iguais
+        else{
+            printf("ERROR, nao pode haver chaves iguais\n"); 
+            return;
+        }
     }
 
 }
 
 // Funcao responsavel por navegar pela arvore para encontrar um item
-void pesquisar(char* arqNome, int chave, Analise* analisador, bool printer){
+void pesquisar(int chave, Analise* analisador, bool printer){
     FILE* arvore = fopen("arvoreBinaria.bin", "rb"); 
     if(arvore == NULL){
         printf("Erro ao abrir o arvore Binaria para fazer a pesquisa\n");
@@ -148,8 +152,6 @@ int main() {
     // Variavel para analise
     Analise analisador;
     inicializaAnalise(&analisador); 
-    char arqNome[30];
-    strcpy(arqNome, ""); 
     int printer = true; //////////////// tirar daqio
     
     // Talvez eu precise colocar essas aberturas dentro das funções, abrindo e fechando sempre ////////////////////////////////////
@@ -159,22 +161,11 @@ int main() {
         return 0;
     }
 
-    FILE* registrosBinarios = fopen("registros.bin", "rb");
+    FILE* registrosBinarios = fopen("registros.bin", "rb"); //////////////////// questao do nome
     if(registrosBinarios == NULL){
         printf("Erro ao abrir o arquivo binario de registros\n");
         return 0;
     }
-
-
-        // preciso pensar em onde fechar ele depois
-
-        // Pensar na questao da quantidade de registros
-
-    
-
-
-    
-
 
     printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
     printf("Digite a chave do registro que deseja buscar: ");
@@ -194,7 +185,7 @@ int main() {
     inicializaAnalise(&analisador); // Reseta os valores do analisador por que a arvore foi montada 
 
     // clock_gettime(CLOCK_MONOTONIC, &analisador.inicio);
-    pesquisar("arvoreBinaria.bin", chave, &analisador, printer);
+    pesquisar(chave, &analisador, printer);
     // clock_gettime(CLOCK_MONOTONIC, &analisador.fim);
     // analisador.tempoTotal = (analisador.fim.tv_sec - analisador.inicio.tv_sec) + (analisador.fim.tv_nsec - analisador.inicio.tv_nsec) / 1e9;
 
@@ -219,3 +210,8 @@ int main() {
 
     return 0;
 }
+
+// ALTERACOES PENDENTES
+
+// Falta adicionar o controle de tempo
+// Questao da quantidade de item ainda precisa ser modificada 
