@@ -6,3 +6,15 @@ testeGerabin.c
 testeGerabin
 testeBin.bin
 testeBin.txt
+arq_crescente.bin
+arq_drecres.bin
+arq_aleatorio.bin
+arq_crescente.txt
+arq_drecres.txt
+arq_aleatorio.txt
+geradorTradutor
+pessoal/
+arvoreBinariaTeste.h
+arvoreBinaria.bin
+arvoreBinaria.txt
+main

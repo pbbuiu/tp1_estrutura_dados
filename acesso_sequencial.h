@@ -6,44 +6,36 @@
 #define ITENSPAGINA 100
 
 typedef struct{
-    int pos;        //Número da página no disco
-    int chavePag;   //Primeira itemChave da página no disco
+    int pos;        //Número da página no arquivo
+    int chavePag;   //Primeira itemChave da página no arquivo
 } tipoIndice;
 
 int pesquisa (Analise *a, tipoIndice tabelaPaginas[], int tamTabela, Registros* itemPesquisado, FILE *arq, bool p);
 
-bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq, bool p){
+bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq, bool p, FILE *arq){
     clock_gettime(CLOCK_MONOTONIC, &a->inicio); //Inicio do contador de tempo de pre-processamento
     int cont = 0;
     Registros itens[ITENSPAGINA];
     
-    //Calculando o tamanho da tabela que armazenara a posição e a primeira chave da página e a alocando dinamicamente
-    //{
+    //Calculando o tamanho da tabela que armazenara a posição e a primeira chave da página
     int tam = qtdRegistrosArq/ITENSPAGINA;
     int resto = qtdRegistrosArq % ITENSPAGINA;
-
-    a->comparacoes++;
     if (resto != 0) tam++;
     tipoIndice *tabelaPaginas = (tipoIndice*) malloc (tam * sizeof(tipoIndice));
-    //}
     
-    FILE *arq = fopen("arq_crescente.bin", "rb");
-    a->comparacoes++;
-    if (!arq) {printf("Houve um erro na leitura do arquivo!\n"); return false;}
-    
-
-    while(fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
+    while(((cont+1)*ITENSPAGINA < qtdRegistrosArq) && fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = cont+1;
         cont++;
     }
-    a->comparacoes++;
     if (resto != 0){
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = tam;
     }
+    else
+        a->transferencia++;
     clock_gettime(CLOCK_MONOTONIC, &a->fim); //Fim do contador de pre-processamento
     a->tempoTotal = (a->fim.tv_sec - a->inicio.tv_sec) + (a->fim.tv_nsec - a->inicio.tv_nsec)/ 1e9;
 
@@ -75,18 +67,20 @@ int pesquisa (Analise *a, tipoIndice tabelaPaginas[], int tamTabela, Registros* 
     clock_gettime(CLOCK_MONOTONIC, &a->inicio);
     Registros pagina[ITENSPAGINA];
     inicializaAnalise(a);
-    int qtdItens, desloc;
+    int qtdItens;
+    double desloc;
 
     int IndiceTabelaPagina=0;
     if (p) printf("\n= Comparações com as chaves armazenadas na tabela de paginas =\n");
+
+    //Compara as chaves da tabela de páginas com a chave procurada
     while(IndiceTabelaPagina < tamTabela && tabelaPaginas[IndiceTabelaPagina].chavePag <= itemPesquisado->chave){
         if (p) printf("[P:%d - T:%d]\n",itemPesquisado->chave  ,tabelaPaginas[IndiceTabelaPagina].chavePag);
         a->comparacoes++;
         IndiceTabelaPagina++;
     } 
-    if (IndiceTabelaPagina == 0) return 0; //Caso a chave procurada seja menor que primeira chavePagina da tabela: A chave não existe
+    if (IndiceTabelaPagina == 0) return 0; //Se a chave procurada for menor que a primeira chava o item não existe
 
-    a->comparacoes++;
     if (IndiceTabelaPagina < tamTabela)
         qtdItens = ITENSPAGINA;
     else{

@@ -1,6 +1,9 @@
 #include "base.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
 
 typedef struct{
     Registros registro;
@@ -8,27 +11,29 @@ typedef struct{
     int dir;
 } Item;
 
-
-// Funcao responsavel apenas por adicionar o primeiro item a arvore
-void criarArvore(FILE* arvore, int novoValor, Analise* analisador){
-    // Cria o item e faz as devidas associacoes
-    Item novoItem;
-    novoItem.registro.chave = novoValor;
-    novoItem.esq = -1;
-    novoItem.dir = -1;
-
-    fwrite(&novoItem, sizeof(Item), 1, arvore); // Escreve o primeiro item
-    analisador->transferencia++; // +1 transferencia
-}
-
 // Funcao responsavel por adicionar um item a arvore
-void inserir(FILE* arvore, int novoValor, Analise* analisador){ 
+void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){ 
+    
+    // Transferencia de um registro do arquivo binario de registros para uma variavel na memoria interna
+    Registros novoRegistro;
+    fread(&novoRegistro, sizeof(Registros), 1, registrosBinarios);
+    analisador->transferencia++; // +1 tranferencia
+
     // Cria o novo item e faz as devidas associacoes
     Item novoItem;
-    novoItem.registro.chave = novoValor;
+    novoItem.registro.chave = novoRegistro.chave;
+    novoItem.registro.dado1 = novoRegistro.dado1;
+    strcpy(novoItem.registro.dado2, novoRegistro.dado2);
     novoItem.esq = -1;
     novoItem.dir = -1;
 
+    // Insercao do primeiro item, logo eh executado apenas uma vez quando a arvore esta vazia
+    if(ftell(arvore) == 0){
+        fwrite(&novoItem, sizeof(Item), 1, arvore); // Escreve o primeiro item
+        analisador->transferencia++; // +1 transferencia
+        return;
+    }
+        
     fwrite(&novoItem, sizeof(Item), 1, arvore); // Escreve o item no final da arvore
     analisador->transferencia++; // +1 tranferencia 
 
@@ -39,7 +44,7 @@ void inserir(FILE* arvore, int novoValor, Analise* analisador){
 
     Item ItemAtual; // Variavel que recebe o item lido na arvore, usada para as devidas comparacoes
     while(1){
-        posicaoParaAttArvore = ftell(arvore)/sizeof(Item); ///////////////////////////////////////////////////////////////// explicar melhor isso aqui
+        posicaoParaAttArvore = ftell(arvore)/sizeof(Item); // Guarda a posicao do ultimo item lido
 
         fread(&ItemAtual, sizeof(Item), 1, arvore); // Le o item atual
         analisador->transferencia++; // +1 transferencia 
@@ -48,10 +53,11 @@ void inserir(FILE* arvore, int novoValor, Analise* analisador){
             analisador->comparacoes++; // +1 comparacao
 
             // Caso o campo esq seja -1, quer dizer que é um "no" sem filhos, logo é aqui que vamos atualizar o endereco
-            if(ItemAtual.esq == -1){ ///////////////////////////////////////////////////////////// nao sei se conta como comparacao para ser adicionada ao analisador
+            if(ItemAtual.esq == -1){ 
+                analisador->comparacoes++; // +1 comparacao
                 ItemAtual.esq = posicaoNovoItem; // Variavel na memoria interna recebe a posicao do novo item adicionado 
 
-                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); ///////////////////////////////////////////////////// explicar melhr aqui
+                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); // Vamos para a posicao do item que vamos atualizar na arvore binaria
                 fwrite(&ItemAtual, sizeof(Item), 1, arvore);
                 analisador->transferencia++; // +1 tranferencia
 
@@ -63,17 +69,18 @@ void inserir(FILE* arvore, int novoValor, Analise* analisador){
             // So caimos nesse else caso a item atual possua filho (dir ou esq != -1), logo vamos para a posicao desse filho
             else{
                 fseek(arvore, ItemAtual.esq*sizeof(Item), SEEK_SET); // Ponteiro vai do inicio até a posicao do proximo item
-            }////////////////////////////////////////////////////////////
+            }
         }
 
         else if(novoItem.registro.chave > ItemAtual.registro.chave){
              analisador->comparacoes++; // +1 comparacao
 
             // Caso o campo dir seja -1, quer dizer que é um "no" sem filhos, logo é aqui que vamos atualizar o endereco
-            if(ItemAtual.dir == -1){ ///////////////////////////////////////////////////////////// nao sei se conta como comparacao para ser adicionada ao analisador
+            if(ItemAtual.dir == -1){
+                analisador->comparacoes++; // +1 comparacao
                 ItemAtual.dir = posicaoNovoItem; // Variavel na memoria interna recebe a posicao do novo item adicionado 
 
-                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); ///////////////////////////////////////////////////// explicar melhr aqui
+                fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET);// Vamos para a posicao do item que vamos atualizar na arvore binaria
                 fwrite(&ItemAtual, sizeof(Item), 1, arvore);
                 analisador->transferencia++; // +1 tranferencia
 
@@ -85,19 +92,24 @@ void inserir(FILE* arvore, int novoValor, Analise* analisador){
             // So caimos nesse else caso a item atual possua filho (dir ou esq != -1), logo vamos para a posicao desse filho
             else{
                 fseek(arvore, ItemAtual.dir*sizeof(Item), SEEK_SET); // Ponteiro vai do inicio até a posicao do proximo item
-            }////////////////////////////////////////////////////////////
+            }
         }
 
-        else
-            printf("ERROR, nao pode haver chaves iguais\n"); ////////////////////////////////////// pensar no que fazer em caso de itens iguais
+        else{
+            printf("ERROR, nao pode haver chaves iguais\n"); 
+            return;
+        }
     }
 
 }
 
 // Funcao responsavel por navegar pela arvore para encontrar um item
-void pesquisar(int valor, Analise* analisador){
-
-    FILE* arvore = fopen("arvoreBinaria.bin", "rb"); ////////////////////////////////////////////////// Se pa o certo seria passar o arquivo por argumento e não criar ele aq
+void pesquisar(int chave, Analise* analisador, bool printer){
+    FILE* arvore = fopen("arvoreBinaria.bin", "rb"); 
+    if(arvore == NULL){
+        printf("Erro ao abrir o arvore Binaria para fazer a pesquisa\n");
+        return;
+    }
 
     Item itemAtual; 
     while(1){
@@ -105,24 +117,25 @@ void pesquisar(int valor, Analise* analisador){
         analisador->transferencia++; // +1 transferencia
 
         // Caso o valor procurado seja menor do o valor atual e diferente de -1, vamos para o item na posicao guardada no esq
-        if(valor < itemAtual.registro.chave && itemAtual.esq != -1){   
-            analisador->comparacoes++; // +1 comparacao
+        if(chave < itemAtual.registro.chave && itemAtual.esq != -1){   
+            analisador->comparacoes++; // +1 comparacao 
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
             fseek(arvore, itemAtual.esq*sizeof(Item), SEEK_SET); // Vai para posicao mostrada pelo esq
-            printf("%d\n", itemAtual.registro.chave); ///////////////////////////////// Retirar isso aqui depois
         }
         
         // Caso o valor procurado seja maior do o valor atual e diferente de -1, vamos para o item na posicao guardada no dir
-        else if(valor > itemAtual.registro.chave && itemAtual.dir != -1){
+        else if(chave > itemAtual.registro.chave && itemAtual.dir != -1){
             analisador->comparacoes++; // +1 comparacao 
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
             fseek(arvore, itemAtual.dir*sizeof(Item), SEEK_SET); // Vai para a posicao mostrada pelo dir
-            printf("%d\n", itemAtual.registro.chave); ////////////////////////////// tirar isso depois
-
         }
 
         // Achamos o item
-        else if(valor == itemAtual.registro.chave){
-            analisador->comparacoes++; ////////////////////////////// talvez nao seja considera uma comparacao
-            printf("Achou na posicao %ld\n", ftell(arvore)/sizeof(Item));
+        else if(chave == itemAtual.registro.chave){
+            analisador->comparacoes++; 
+            if(printer) printf("Comparacao atual: [%d <-> %d] --- Transferencias: %ld Compacoes: %ld\n", itemAtual.registro.chave, chave, analisador->transferencia, analisador->comparacoes);
+            printf("\nRegistro encontrado na posicao %ld da arvore binaria\n", ftell(arvore)/sizeof(Item));
+            if (printer) printf("Chave: %d\nDado1: %ld\nDado2: %s.- \n", chave, itemAtual.registro.dado1, itemAtual.registro.dado2);
             break;
         }
 
@@ -136,63 +149,51 @@ void pesquisar(int valor, Analise* analisador){
     fclose(arvore);
 }   
 
-realizaPesquisaBinaria (Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, bool p){
-    FILE* arvore = fopen("arvoreBinaria.bin", "wb+");
-    criarArvore(arvore, 50, &analisador); // Não sei se é o ideal fazer algo assim
+bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int quantidade, bool printer, FILE *registrosBinarios) {
+    // Toda essa parte diz respeito apenas a selecao do tipo de arquivo que sera usado pra construcao da arvore
+    printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
 
+    FILE* arvore = fopen("arvoreBinaria.bin", "wb+"); 
+    if(arvore == NULL){printf("Erro ao criar o arquivo arvoreBinaria.bin\n"); return 0;}
 
+    printf("\n- PRE-PROCESSAMENTO -\n\n"); 
 
-
-// Toda essa parte e provisoria, responsavel por criar um arquivo txt que represente o arquivo binario da arvore
-    FILE* txt = fopen("rascunho.txt", "w");
-    int qtdNumeros = 1000;
-    int vetor[qtdNumeros];
-    int qtd = 0;
-    int repetido;
-
-    while (qtd < qtdNumeros) {
-        int novoValor = rand() % 10000;
-        if(novoValor == 50) break;
-        repetido = 0;
-
-        for (int i = 0; i < qtd; i++) {
-            if (vetor[i] == novoValor) {
-                repetido = 1;
-                break;
-            }
-        }
-
-        if (repetido == 0) {
-            vetor[qtd] = novoValor;
-            inserir(arvore, novoValor, &analisador);
-            qtd++;
-        }
+    // Insere todos os valores do vetor na arvore binaria
+    clock_gettime(CLOCK_MONOTONIC, &analisador->inicio);
+    for(int i = 0; i < quantidade; i++){
+        inserir(arvore, registrosBinarios, analisador);
     }
+    clock_gettime(CLOCK_MONOTONIC, &analisador->fim);
+    analisador->tempoTotal = (analisador->fim.tv_sec - analisador->inicio.tv_sec) + (analisador->fim.tv_nsec - analisador->inicio.tv_nsec) / 1e9;
 
-    Item conversor;
-    fseek(arvore, 0, SEEK_SET);
-    for(int i = 0; i < qtdNumeros; i++){
-        fread(&conversor, sizeof(Item), 1, arvore);
-        fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
+    // Imprime as analises da montagem da arvore
+    printf("- Criacao da arvore binaria:\n");
+    printf("Tempo: %.9lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
+    inicializaAnalise(analisador); // Reseta os valores do analisador por que a arvore foi montada 
+
+    clock_gettime(CLOCK_MONOTONIC, &analisador->inicio);
+    pesquisar(itemPesquisado->chave, analisador, printer);
+    clock_gettime(CLOCK_MONOTONIC, &analisador->fim);
+    analisador->tempoTotal = (analisador->fim.tv_sec - analisador->inicio.tv_sec) + (analisador->fim.tv_nsec - analisador->inicio.tv_nsec) / 1e9;
+
+    // Imprime as analises da pesquisa
+    printf("\n- Pesquisa -\n"); 
+    printf("Tempo: %.9lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
+
+    // Criacao de um arquivo txt que representa a arvore binaria
+    FILE* txt;
+    if((txt = fopen("arvoreBinaria.txt", "w")) != NULL){
+        Item conversor;
+        fseek(arvore, 0, SEEK_SET);
+        for(int i = 0; i < quantidade; i++){ 
+            fread(&conversor, sizeof(Item), 1, arvore);
+            fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
+        }
+        fclose(txt);
     }
-
-
-
-
-
-
+    else printf("Erro ao criar o arquivo txt da arvore binaria\n");
 
     fclose(arvore);
-    // fclose(txt);
-
-    printf("Arvore montada, qual valor voce quer procurar nela?\n");
-    int valor;
-    scanf("%d", &valor);
-    pesquisar(valor, &analisador);
-
-    printf("\nAnalises:\n");
-    printf("Numero de transferencias: %ld\nNumero de comparacoes: %ld", analisador.transferencia, analisador.comparacoes);
 
     return 0;
 }
-

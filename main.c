@@ -1,4 +1,3 @@
-#include "arvoreB.h"
 #include "arvoreBinaria.h"
 #include "acesso_sequencial.h"
 #include "base.h"
@@ -16,36 +15,41 @@ int main(int argc, char *argv[]){
     char *check;
 
     //Transforma os argumentos da execução do programa em seus respectivos tipos
-
     int metodo     = strtol(argv[1], &check, 10); // <Metodo> Acesso[1] Binaria[2] B[3] B*[4]
     if (*check != '\0') return 1; 
     
     int quantidade = strtol(argv[2], &check, 10); // <Quantidade>
     if (*check != '\0') return 1;
     
-    int situacao   = strtol(argv[3], &check, 10); // <Situacao>  Crescente[1] Decrescente[2] Aleatorio[3]
+    char situacao[20];
+    if      (strtol(argv[3], &check, 10) == 1){ strcpy(situacao, "arq_crescente.bin"); }//Crescente
+
+    else if (strtol(argv[3], &check, 10) == 2) strcpy(situacao, "arq_decres.bin");    //Decrescente
+    else                                       strcpy(situacao, "arq_aleatorio.bin"); //Aleatorio
     if (*check != '\0') return 1;
     
     int chave = strtol(argv[4], &check, 10); // <Chave>
     if (*check != '\0') return 1;
 
-    //Opção de apresentação das chaves de pesquisa dos registros do arquivo considerado
-    if (argc == 6) {
-        opt = false;
-        if (strcmp(argv[5], "-P") == 0) opt = true;
-        else { printf("Argumento opcional invalido: %s\n", argv[5]); return 1; }
+    if (argc == 6) {//Opcional de visualização do item e do processo de pesquisa
+        opt = true;
     }
 
 
     Registros itemPesquisado;
     itemPesquisado.chave = chave;
-    
+
     Analise a; inicializaAnalise(&a);
     
+    FILE *arq = fopen(situacao, "rb");//Já faz um ponteiro para o arquivo escolhido
+    if (!arq) {printf("Houve um erro na leitura do arquivo!\n"); return false;}
+
 
     if      (metodo == 1){ //Acesso sequencial indexado
-        if (situacao == 1)
-            realizaPesquisa(&a, &itemPesquisado, quantidade, opt);
+        if (strcmp(situacao, "arq_crescente.bin") == 0){
+            if (realizaPesquisa(&a, &itemPesquisado, quantidade, opt, arq) && opt) 
+                printf("Chave: %d Dado1: %ld Dado2: %s", itemPesquisado.chave, itemPesquisado.dado1, itemPesquisado.dado2);
+        }
         else{
             printf("Só é possível utilizar a pesquisa com o método de acesso sequencial indexado com vetores ordenados crescentemente nesse código\n");
             return 1;
@@ -53,18 +57,11 @@ int main(int argc, char *argv[]){
         
     }
     else if (metodo == 2){
-        realizaPesquisaBinaria(&a, &itemPesquisado, quantidade, opt);
+        realizarPesquisaBinaria(&a, &itemPesquisado, quantidade, opt, arq);
 
 
     }
-    else if (metodo == 3){
-        //Testes com árvore B
-        if (situacao <1 || situacao >3)
-        prinft("Situacao fora das possiveis.\n");
-        return 1;
-        else{
-        bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, int situacao, bool p);
-       }
+    else if (metodo == 3){ //Arvore B
     }
     else if (metodo == 4){
         //Testes com árvore B*
