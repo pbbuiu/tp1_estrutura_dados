@@ -10,6 +10,14 @@
 #define MAX_CHAVES (2 * M) //2m quantidade de itens em cada página
 #define NIL (-1L)
 
+#ifdef _WIN32
+    #define SEEK64(f, off, o) _fseeki64((f), (long long)(off), (o))
+    #define TELL64(f)         _ftelli64(f)
+#else
+    #define SEEK64(f, off, o) fseeko((f), (off_t)(off), (o))
+    #define TELL64(f)         ((long long)ftello(f))
+#endif
+
 
 
 //removi o "Tipochave"
