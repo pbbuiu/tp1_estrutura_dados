@@ -30,12 +30,12 @@ void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){
     // Insercao do primeiro item, logo eh executado apenas uma vez quando a arvore esta vazia
     if(ftell(arvore) == 0){
         fwrite(&novoItem, sizeof(Item), 1, arvore); // Escreve o primeiro item
-        analisador->transferencia++; // +1 transferencia
+        analisador->transferencia++; 
         return;
     }
         
     fwrite(&novoItem, sizeof(Item), 1, arvore); // Escreve o item no final da arvore
-    analisador->transferencia++; // +1 tranferencia 
+    analisador->transferencia++; 
 
     int posicaoNovoItem = ftell(arvore)/sizeof(Item) - 1; // Salva a posicao do item que acabou de ser adicionado  
     int posicaoParaAttArvore; // Variavel responsavel por guardar a posicao do ultimo item vizitado pelo ponteiro, importante para atualizacao do esq e dir
@@ -46,20 +46,20 @@ void inserir(FILE* arvore, FILE* registrosBinarios, Analise* analisador){
     while(1){
         posicaoParaAttArvore = ftell(arvore)/sizeof(Item); // Guarda a posicao do ultimo item lido
 
-        fread(&ItemAtual, sizeof(Item), 1, arvore); // Le o item atual
-        analisador->transferencia++; // +1 transferencia 
+        fread(&ItemAtual, sizeof(Item), 1, arvore);
+        analisador->transferencia++; 
 
         if(novoItem.registro.chave < ItemAtual.registro.chave){
-            analisador->comparacoes++; // +1 comparacao
+            analisador->comparacoes++;
 
             // Caso o campo esq seja -1, quer dizer que é um "no" sem filhos, logo é aqui que vamos atualizar o endereco
             if(ItemAtual.esq == -1){ 
-                analisador->comparacoes++; // +1 comparacao
+                analisador->comparacoes++;
                 ItemAtual.esq = posicaoNovoItem; // Variavel na memoria interna recebe a posicao do novo item adicionado 
 
                 fseek(arvore, posicaoParaAttArvore*sizeof(Item), SEEK_SET); // Vamos para a posicao do item que vamos atualizar na arvore binaria
                 fwrite(&ItemAtual, sizeof(Item), 1, arvore);
-                analisador->transferencia++; // +1 tranferencia
+                analisador->transferencia++; 
 
                 fseek(arvore, 0, SEEK_END); // Jogamos o ponteiro no final para adicionar o proximo item caso exista
 
@@ -149,23 +149,14 @@ void pesquisar(int chave, Analise* analisador, bool printer){
     fclose(arvore);
 }   
 
-bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int quantidade, char* situacao, bool printer) {
+bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int quantidade, char* situacao, bool printer, FILE* registrosBinarios) {
     // Toda essa parte diz respeito apenas a selecao do tipo de arquivo que sera usado pra construcao da arvore
     printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
 
     FILE* arvore = fopen("arvoreBinaria.bin", "wb+"); 
-    if(arvore == NULL){
-        printf("Erro ao criar o arquivo arvoreBinaria.bin\n");
-        return 0;
-    }
+    if(arvore == NULL){printf("Erro ao criar o arquivo arvoreBinaria.bin\n"); return 0;}
 
-    FILE* registrosBinarios = fopen(situacao, "rb"); 
-    if(registrosBinarios == NULL){
-        printf("Erro ao abrir o arquivo binario de registros\n");
-        return 0;
-    }
-
-    printf("\n- PRE-PROCESSAMENTO -\n\n"); ////////////////////////////////////////////////// falta incluir o tempo
+    printf("\n- PRE-PROCESSAMENTO -\n\n");
 
     // Insere todos os valores do vetor na arvore binaria
     clock_gettime(CLOCK_MONOTONIC, &analisador->inicio);
@@ -180,21 +171,21 @@ bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int
     printf("Tempo: %.9lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
     inicializaAnalise(analisador); // Reseta os valores do analisador por que a arvore foi montada 
 
-    // clock_gettime(CLOCK_MONOTONIC, &analisador.inicio);
+    clock_gettime(CLOCK_MONOTONIC, &analisador->inicio);
     pesquisar(itemPesquisado->chave, analisador, printer);
-    // clock_gettime(CLOCK_MONOTONIC, &analisador.fim);
-    // analisador.tempoTotal = (analisador.fim.tv_sec - analisador.inicio.tv_sec) + (analisador.fim.tv_nsec - analisador.inicio.tv_nsec) / 1e9;
+    clock_gettime(CLOCK_MONOTONIC, &analisador->fim);
+    analisador->tempoTotal = (analisador->fim.tv_sec - analisador->inicio.tv_sec) + (analisador->fim.tv_nsec - analisador->inicio.tv_nsec) / 1e9;
 
     // Imprime as analises da pesquisa
-    printf("\n- Pesquisa -\n"); /////////////////////////////// falta incluir o tempo
-    printf("Tempo: %f\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
+    printf("\n- Pesquisa -\n");
+    printf("Tempo: %lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
 
     // Criacao de um arquivo txt que representa a arvore binaria
     FILE* txt;
     if((txt = fopen("arvoreBinaria.txt", "w")) != NULL){
         Item conversor;
         fseek(arvore, 0, SEEK_SET);
-        for(int i = 0; i < quantidade; i++){ /////////////////////////// preciso saber a quantidade de itens
+        for(int i = 0; i < quantidade; i++){
             fread(&conversor, sizeof(Item), 1, arvore);
             fprintf(txt, "%d %d %d\n", conversor.esq, conversor.registro.chave, conversor.dir);
         }
