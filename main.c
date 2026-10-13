@@ -1,4 +1,4 @@
-// #include "arvoreBinaria.h"
+#include "arvoreBinaria.h"
 #include "acesso_sequencial.h"
 #include "base.h"
 #include <stdio.h>
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
         
     }
     else if (metodo == 2){
-        // realizaPesquisaBinaria(&a, &itemPesquisado, quantidade, opt);
+        realizarPesquisaBinaria(&a, &itemPesquisado, quantidade, situacao, opt);
 
 
     }
