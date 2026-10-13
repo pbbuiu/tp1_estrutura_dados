@@ -149,7 +149,7 @@ void pesquisar(int chave, Analise* analisador, bool printer){
     fclose(arvore);
 }   
 
-bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int quantidade, char* situacao, bool printer, FILE *registrosBinarios) {
+bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int quantidade, bool printer, FILE *registrosBinarios) {
     // Toda essa parte diz respeito apenas a selecao do tipo de arquivo que sera usado pra construcao da arvore
     printf("\n======== ARVORE BINARIA MEMORIA EXTERNA ========\n");
 
@@ -178,7 +178,7 @@ bool realizarPesquisaBinaria(Analise* analisador, Registros* itemPesquisado, int
 
     // Imprime as analises da pesquisa
     printf("\n- Pesquisa -\n"); 
-    printf("Tempo: %lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
+    printf("Tempo: %.9lf\nNumero de comparacoes: %ld\nNumero de transferencias: %ld\n\n", analisador->tempoTotal, analisador->comparacoes, analisador->transferencia);
 
     // Criacao de um arquivo txt que representa a arvore binaria
     FILE* txt;
