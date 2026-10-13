@@ -23,7 +23,7 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
     if (resto != 0) tam++;
     tipoIndice *tabelaPaginas = (tipoIndice*) malloc (tam * sizeof(tipoIndice));
     
-    while(fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA && ((cont+1)*ITENSPAGINA < qtdRegistrosArq)){
+    while(((cont+1)*ITENSPAGINA < qtdRegistrosArq) && fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = cont+1;
