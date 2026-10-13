@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "gerador.h"
 
 #define M 2  //Ordem da minha Árvore B
 #define MAX_CHAVES (2 * M) //2m quantidade de itens em cada página
