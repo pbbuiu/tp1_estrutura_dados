@@ -19,23 +19,17 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
     
     //Calculando o tamanho da tabela que armazenara a posição e a primeira chave da página
     int tam = qtdRegistrosArq/ITENSPAGINA;
-    int resto = qtdRegistrosArq % ITENSPAGINA;
-    if (resto != 0) tam++;
+    if (qtdRegistrosArq % ITENSPAGINA != 0) tam++;
     tipoIndice *tabelaPaginas = (tipoIndice*) malloc (tam * sizeof(tipoIndice));
+    if (!tabelaPaginas) {printf("Erro na criação da tabela de paginas\n"); return false;}
     
-    while(((cont+1)*ITENSPAGINA < qtdRegistrosArq) && fread(itens, sizeof(Registros), ITENSPAGINA, arq) == ITENSPAGINA){
+    while(fread(itens, sizeof(Registros), ITENSPAGINA, arq) != 0){
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = cont+1;
         cont++;
     }
-    if (resto != 0){
-        a->transferencia++;
-        tabelaPaginas[cont].chavePag = itens[0].chave;
-        tabelaPaginas[cont].pos = tam;
-    }
-    else
-        a->transferencia++;
+    
     clock_gettime(CLOCK_MONOTONIC, &a->fim); //Fim do contador de pre-processamento
     a->tempoTotal = (a->fim.tv_sec - a->inicio.tv_sec) + (a->fim.tv_nsec - a->inicio.tv_nsec)/ 1e9;
 
@@ -55,6 +49,8 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
 
     if (posItem !=0){
         printf("O dado se encontra na posicao: %d\n", posItem);
+        free(tabelaPaginas);
+        fclose(arq);
         return true;
     }
     printf("Não encontrou\n");
