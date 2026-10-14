@@ -18,3 +18,7 @@ arvoreBinariaTeste.h
 arvoreBinaria.bin
 arvoreBinaria.txt
 main
+resultados_acesso_sequencial_detalhado.csv
+resultados_acesso_sequencial_medias.csv
+resultados_acesso_sequencial_relatorio.txt
+executar_experimentos-v3.py
