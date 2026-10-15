@@ -448,10 +448,12 @@ bool RealizaPesquisaArvoreBEstrela(Analise *a, Registros *itemPesquisado, long i
 
     if (achou)
     {
-        printf("\nRegistro encontrado:\n");
-        printf("chave = %d\n", itemPesquisado->chave);
-        printf("dado1 = %ld\n", itemPesquisado->dado1);
-        printf("dado2 = %s\n", itemPesquisado->dado2);
+        printf("\nRegistro encontrado\n");
+        if (p){
+            printf("chave = %d\n", itemPesquisado->chave);
+            printf("dado1 = %ld\n", itemPesquisado->dado1);
+            printf("dado2 = %s\n", itemPesquisado->dado2);
+        }
     }
     else
     {
