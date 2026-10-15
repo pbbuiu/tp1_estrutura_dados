@@ -310,7 +310,7 @@ bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdR
 
     if (achou){
         printf("Registro encontrado na posicao %ld do arquivo:\n", x.pos + 1);
-        printf("chave = %d\ndado1 = %ld\ndado2 = %s\n", itemPesquisado->chave, itemPesquisado->dado1, itemPesquisado->dado2);
+        if (p) printf("chave = %d\ndado1 = %ld\ndado2 = %s\n", itemPesquisado->chave, itemPesquisado->dado1, itemPesquisado->dado2);
     }
     else printf("A chave %d nao foi encontrada\n", itemPesquisado->chave);
 
