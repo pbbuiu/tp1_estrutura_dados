@@ -1,4 +1,6 @@
 #include "arvoreBinaria.h"
+#include "arvoreB.h"
+#include "arvoreBestrela.h"
 #include "acesso_sequencial.h"
 #include "base.h"
 #include <stdio.h>
@@ -62,9 +64,12 @@ int main(int argc, char *argv[]){
 
     }
     else if (metodo == 3){ //Arvore B
+        realizaPesquisaArvoreB(&a, &itemPesquisado, quantidade, opt, arq);
+        fclose(arq);
     }
     else if (metodo == 4){
-        //Testes com árvore B*
+        RealizaPesquisaArvoreBEstrela(&a, &itemPesquisado, quantidade, arq, opt);
+        fclose(arq);
 
 
     }

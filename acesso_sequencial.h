@@ -13,6 +13,7 @@ typedef struct{
 int pesquisa (Analise *a, tipoIndice tabelaPaginas[], int tamTabela, Registros* itemPesquisado, FILE *arq, bool p);
 
 bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq, bool p, FILE *arq){
+
     clock_gettime(CLOCK_MONOTONIC, &a->inicio); //Inicio do contador de tempo de pre-processamento
     int cont = 0;
     Registros itens[ITENSPAGINA];
@@ -23,12 +24,15 @@ bool realizaPesquisa(Analise *a, Registros *itemPesquisado, int qtdRegistrosArq,
     tipoIndice *tabelaPaginas = (tipoIndice*) malloc (tam * sizeof(tipoIndice));
     if (!tabelaPaginas) {printf("Erro na criação da tabela de paginas\n"); return false;}
     
-    while(fread(itens, sizeof(Registros), ITENSPAGINA, arq) != 0){
+
+    while(cont < tam){
+        if (fread(itens, sizeof(Registros), ITENSPAGINA, arq) == 0) break;
         a->transferencia++;
         tabelaPaginas[cont].chavePag = itens[0].chave;
         tabelaPaginas[cont].pos = cont+1;
         cont++;
     }
+
     
     clock_gettime(CLOCK_MONOTONIC, &a->fim); //Fim do contador de pre-processamento
     a->tempoTotal = (a->fim.tv_sec - a->inicio.tv_sec) + (a->fim.tv_nsec - a->inicio.tv_nsec)/ 1e9;

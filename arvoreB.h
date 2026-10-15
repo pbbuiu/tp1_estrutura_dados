@@ -10,10 +10,10 @@
 #define MAX_CHAVES (2 * M) //2m quantidade de itens em cada página
 #define NIL (-1L)
 
-#ifdef _WIN32
+#ifdef _WIN32//para o windowns 32bits
     #define SEEK64(f, off, o) _fseeki64((f), (long long)(off), (o))
     #define TELL64(f)         _ftelli64(f)
-#else
+#else//para linux
     #define SEEK64(f, off, o) fseeko((f), (off_t)(off), (o))
     #define TELL64(f)         ((long long)ftello(f))
 #endif
@@ -44,7 +44,7 @@ typedef struct{
 void lePaginaB(ArvoreB *t, TipoApontador pos, TipoPagina *pag, Analise *a){
        SEEK64(t->arqArvore, (long long)pos * (long long)sizeof(TipoPagina), SEEK_SET);
     if ( fread(pag, sizeof(TipoPagina), 1 , t->arqArvore) != 1){
-        printf("Erro ao ler a páhina %ld da arvoreB\n", pos);
+        printf("Erro ao ler a página %ld da arvoreB\n", pos);
         exit(1);
     }
     a->transferencia++;
@@ -225,37 +225,27 @@ static void calculaTempo(Analise *a){
     a->tempoTotal = (a->fim.tv_sec - a->inicio.tv_sec) + (a->fim.tv_nsec - a->inicio.tv_nsec) / 1e9;
 }
 
-bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, int situacao, bool p){
-    char *nomes[3] = {"arq_crescente.bin", "arq_decres.bin", "arq_aleatorio.bin"};
- 
-    if (situacao < 1 || situacao > 3){
-        printf("Situacao invalida: use 1 (crescente), 2 (decrescente) ou 3 (aleatorio)\n");
+//Recebe o arquivo de dados ja aberto ("rb") pelo main, gerado previamente pelo geradorTradutor.
+//Esta funcao NAO abre, gera nem fecha o arquivo de dados: quem abriu (main) deve fecha-lo.
+bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdRegistrosArq, bool p, FILE *arqDados){
+    if (!arqDados){
+        printf("Arquivo de dados invalido\n");
         return false;
     }
     if (qtdRegistrosArq <= 0){
         printf("A quantidade de registros deve ser positiva\n");
         return false;
     }
-    char *nomeDados = nomes[situacao - 1];
- 
-    //Abre o arquivo de dados; se nao existir (ou tiver outra quantidade) ele e criado
-    FILE *arqDados = fopen(nomeDados, "rb");
-    long long qtdNoArquivo = -1;
-    if (arqDados){
-        SEEK64(arqDados, 0, SEEK_END);
-        qtdNoArquivo = TELL64(arqDados) / (long long)sizeof(Registros);
-        SEEK64(arqDados, 0, SEEK_SET);
+
+    //Confere se o arquivo gerado tem registros suficientes para a quantidade pedida
+    SEEK64(arqDados, 0, SEEK_END);
+    long long qtdNoArquivo = TELL64(arqDados) / (long long)sizeof(Registros);
+    SEEK64(arqDados, 0, SEEK_SET);
+    if (qtdNoArquivo < qtdRegistrosArq){
+        printf("O arquivo possui apenas %lld registros, mas foram pedidos %ld\n", qtdNoArquivo, qtdRegistrosArq);
+        return false;
     }
-    if (!arqDados || qtdNoArquivo != qtdRegistrosArq){
-        if (arqDados) fclose(arqDados);
-        printf("Gerando o arquivo %s com %ld registros...\n", nomeDados, qtdRegistrosArq);
-        if (!geraArquivo(nomeDados, (int)qtdRegistrosArq, situacao)) return false;
-        arqDados = fopen(nomeDados, "rb");
-        if (!arqDados){
-            printf("Erro ao abrir o arquivo %s\n", nomeDados);
-            return false;
-        }
-    }
+
     ArvoreB t;
     t.arqDados = arqDados;
     t.raiz = NIL;
@@ -263,25 +253,24 @@ bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdR
     t.arqArvore = fopen("arvoreB.bin", "wb+");
     if (!t.arqArvore){
         printf("Erro ao criar o arquivo arvoreB.bin\n");
-        fclose(arqDados);
         return false;
     }
- 
+
     if (p) imprimeChavesArquivo(arqDados, qtdRegistrosArq);
- 
+
     printf("========ARVORE B (M = %d)========\n\n", M);
     inicializaAnalise(a);
     clock_gettime(CLOCK_MONOTONIC, &a->inicio);
- 
+
     Registros reg;
     for (long i = 0; i < qtdRegistrosArq; i++){
         if (fread(&reg, sizeof(Registros), 1, arqDados) != 1){
             printf("Erro ao ler o registro %ld do arquivo de dados\n", i);
-            fclose(arqDados); fclose(t.arqArvore);
+            fclose(t.arqArvore);
             return false;
         }
         a->transferencia++; //registro lido da memoria externa
- 
+
         TipoRegistro novo;
         novo.chave = reg.chave;
         novo.pos = i;
@@ -289,43 +278,42 @@ bool realizaPesquisaArvoreB(Analise *a, Registros *itemPesquisado, long int qtdR
             printf("Aviso: chave %d repetida, ignorada\n", reg.chave);
     }
     calculaTempo(a);
- 
+
     printf("- Pre-processamento -\n");
     printf("Tempo: %.9lf\n", a->tempoTotal);
     printf("Numero de comparacoes: %ld\n", a->comparacoes);
     printf("Numero de transferencias: %ld\n\n", a->transferencia);
     inicializaAnalise(a);
     clock_gettime(CLOCK_MONOTONIC, &a->inicio);
- 
+
     TipoRegistro x;
     x.chave = itemPesquisado->chave;
     x.pos = -1;
     bool achou = pesquisaB(&t, t.raiz, &x, a);
- 
+
     if (achou){
         //Le o registro completo no arquivo de dados
         SEEK64(arqDados, (long long)x.pos * (long long)sizeof(Registros), SEEK_SET);
         if (fread(itemPesquisado, sizeof(Registros), 1, arqDados) != 1){
             printf("Erro ao ler o registro completo\n");
-            fclose(arqDados); fclose(t.arqArvore);
+            fclose(t.arqArvore);
             return false;
         }
         a->transferencia++;
     }
     calculaTempo(a);
- 
+
     printf("- Pesquisa -\n");
     printf("Tempo: %.9lf\n", a->tempoTotal);
     printf("Numero de comparacoes: %ld\n", a->comparacoes);
     printf("Numero de transferencias: %ld\n\n", a->transferencia);
- 
+
     if (achou){
         printf("Registro encontrado na posicao %ld do arquivo:\n", x.pos + 1);
         printf("chave = %d\ndado1 = %ld\ndado2 = %s\n", itemPesquisado->chave, itemPesquisado->dado1, itemPesquisado->dado2);
     }
     else printf("A chave %d nao foi encontrada\n", itemPesquisado->chave);
- 
-    fclose(arqDados);
+
     fclose(t.arqArvore);
     return achou;
 }
